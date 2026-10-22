@@ -1,5 +1,7 @@
 # Customer Churn Prediction with Explainable AI
 
+**[Try the live app](https://explainable-churn-model.streamlit.app)**: score a single customer or upload a CSV, and see churn risk, recommended actions, and the SHAP drivers behind each prediction.
+
 Predicting which telecom customers are likely to cancel, explaining **why** with SHAP, and turning the predictions into a prioritized, costed retention plan.
 
 **Highlights**
@@ -219,6 +221,25 @@ Test customers were grouped into four tiers. The Low/Medium boundary is the 0.30
 
 ---
 
+## Interactive App
+
+A Streamlit app turns the model into a tool a retention team could use.
+
+**Single customer:** enter a customer's details and get their churn probability, risk tier, recommended action, and the main factors raising and lowering their risk.
+
+**Batch upload (CSV):** upload a customer list in the dataset's format to get:
+
+- customers flagged for contact and expected monthly revenue at risk
+- a risk-tier summary with recommended actions
+- a ranked customer table with the top two churn drivers, downloadable as CSV
+
+Inputs are validated before scoring (missing columns, unknown category values, non-numeric fields), because a typo like "Fiber" instead of "Fiber optic" would otherwise produce a wrong prediction without any error.
+
+The app's explanations are calculated directly from the model (weight × difference from the average training customer), which reproduces the notebook's SHAP values exactly. Scoring the 1,409 test customers in the app matches the notebook's prediction table for every customer.
+
+![Single-customer view](reports/figures/app_single.png)
+![Batch upload view](reports/figures/app_batch.png)
+
 ## 11. Limitations
 
 - **Sample dataset:** IBM's Telco data is a sample dataset, not a real company's records, so the results show the method rather than real-world figures.
@@ -236,7 +257,6 @@ Test customers were grouped into four tiers. The Low/Medium boundary is the 0.30
 - **Feature engineering:** e.g. number of subscribed services; drop TotalCharges to make individual effects interpretable.
 - **Uplift modeling:** predict who is *persuadable*, not just who is at risk.
 - **Monitoring:** track calibration and data drift over time, and retrain periodically.
-- **Streamlit app:** enter customer details and get a churn probability, risk level, and main drivers using the saved pipeline.
 
 ---
 
@@ -245,19 +265,23 @@ Test customers were grouped into four tiers. The Low/Medium boundary is the 0.30
 ```
 customer-churn-analysis/
 ├── README.md
-├── requirements.txt
+├── requirements.txt                        # Full environment (notebook + app)
 ├── .gitignore
+├── .devcontainer/                          # Added by Streamlit Cloud (GitHub Codespaces setup)
 ├── data/
 │   └── raw/
 │       └── raw_data.csv                    # IBM Telco Customer Churn (Kaggle)
 ├── notebooks/
 │   └── churn_prediction.ipynb              # Full analysis
 ├── models/
-│   └── churn_model.joblib                  # Final pipeline + 0.30 threshold
+│   ├── churn_model.joblib                  # Final pipeline + 0.30 threshold
+│   └── churn_app_artifacts.joblib          # Model + values the app needs for explanations
 ├── reports/
 │   ├── customer_risk_predictions.csv       # Final customer prediction table
-│   └── figures/                            # Charts used in this README
-└── app/                                    # Streamlit app (planned)
+│   └── figures/                            # Charts and app screenshots used in this README
+└── app/
+    ├── app.py                              # Streamlit app (single customer + batch CSV scoring)
+    └── requirements.txt                    # Lightweight dependencies for deployment
 ```
 
 ---
@@ -280,6 +304,9 @@ pip install -r requirements.txt
 
 # 4. Start Jupyter and open notebooks/churn_prediction.ipynb
 jupyter notebook
+
+# 5. (Optional) Run the Streamlit app locally
+python -m streamlit run app/app.py
 ```
 
 If the dataset isn't included, download it from [Kaggle](https://www.kaggle.com/datasets/blastchar/telco-customer-churn) and save it as `data/raw/raw_data.csv`.
